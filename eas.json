@@ -1,0 +1,21 @@
+{
+  "cli": {
+    "version": ">= 0.52.0"
+  },
+  "build": {
+    "Float": {
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "Float2": {
+      "android": {
+        "gradleCommand": ":app:assembleRelease"
+      }
+    },
+    "Float3": {
+      "developmentClient": true
+    },
+    "production": {}
+  }
+}

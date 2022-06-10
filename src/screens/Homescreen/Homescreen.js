@@ -36,12 +36,9 @@ Notifications.setNotificationHandler({
 
 export let historyData = [];
 async function sendPushNotification(expoPushToken,bodyData) {
-      floodData = bodyData
+       //
       console.log(floodData, "ito ay ang bagong flood data")
       console.log("bago: ",previousData )
-      if(previousData!=floodData){
-       
-       previousData = floodData
        //setPreviousData(floodData);
      console.log("pagkatapos",previousData);
     //  
@@ -64,9 +61,6 @@ async function sendPushNotification(expoPushToken,bodyData) {
     },
     body: JSON.stringify(message),
   });
-}else{
-  console.log("ayaw k o m nag send")
-}
 }
 
 const Homescreen = () => {
@@ -77,8 +71,6 @@ const Homescreen = () => {
   const responseListener = useRef();
   
   const [data, setData] = useState("");
-  
-  
   const [data2, setData2] = useState("");
   const [data3, setData3] = useState("");
   
@@ -88,10 +80,10 @@ const Homescreen = () => {
    // var checker = "a"
     
     let stringData = JSON.parse((e.data.slice(1, -1).replace(/'/g, '"').split(", {"))[0]);
+    console.log("payload: ",stringData)
     //setPreviousData(stringData["water level"])
-    //console.log(stringData)
+    //console.log(stringData)r
     setData (stringData["water level"]);// data = stringData["water level"]
-    
     //console.log("Warer levcio",stringData["water level"]);
     //console.log("live:", data)
     setData2 (stringData["other sensor data"]);
@@ -100,22 +92,22 @@ const Homescreen = () => {
     //floodData = stringData["water level"]
 
 
-    fetch('https://iotproject-sample.herokuapp.com/streams/ESP32V1/', {
-      method: 'GET',
-      headers: {
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImtpbWZvbGxvc29AZ21haWwuY29tIiwidXNlcl9pZCI6ImtpbWZmIiwiaWF0IjoxNjQ3MjM0NjYwfQ.jGfiA8toi4v_8AYP6ohu9qWExEaxmLsQ3sLFtSBZTeU',
-      },
-    }).then(async response => {
-      try {
-          historyData = await response.json();
-          console.log(historyData[0]);
-          console.log(historyData.length);
+    // fetch('https://iotproject-sample.herokuapp.com/streams/ESP32V1/', {
+    //   method: 'GET',
+    //   headers: {
+    //     'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImtpbWZvbGxvc29AZ21haWwuY29tIiwidXNlcl9pZCI6ImtpbWZmIiwiaWF0IjoxNjQ3MjM0NjYwfQ.jGfiA8toi4v_8AYP6ohu9qWExEaxmLsQ3sLFtSBZTeU',
+    //   },
+    // }).then(async response => {
+    //   try {
+    //       historyData = await response.json();
+    //       console.log(historyData[0]);
+    //       console.log(historyData.length);
           
           
-      } catch (err){
-        console.log(err.message);
+    //   } catch (err){
+    //     console.log(err.message);
 
-      }})
+    //   }})
       
     
   }
@@ -125,28 +117,32 @@ const Homescreen = () => {
     headers: {}, // Your request headers. Default: {}
     body: undefined, // Your request body sent on connection: Default: undefined
     debug: false, // Show console.debug messages for debugging purpose. Default: false
-    pollingInterval: 1000000000000, // Time (ms) between reconnections. Default: 5000
+    pollingInterval: 1000, // Time (ms) between reconnections. Default: 5000
   }
+  
   let sse = new EventSource('https://iotproject-sample.herokuapp.com/streams/live/ESP32V1',options);
   sse.addEventListener("message", async (e) => {
     
-    handleStream(e)
-    globalFLoodData = data;
-    
+      handleStream(e)
+  });
+
+  sse.addEventListener("close", (event) => {
+    console.log("Close SSE connection.");
   });
 
 
 
-
-
+  
+  let prevbodyData = ""
   useEffect(()=>{
-
-    sendPushNotification(expoPushToken,data);
-    console.log('useEffect pabilang');
-    console.log(data)
-    console.log("new var: ",globalFLoodData)
-
-  },[globalFLoodData])
+    if(data != prevbodyData){
+      sendPushNotification(expoPushToken,data);     
+      
+      prevbodyData = data
+      console.log("previous data: ",  prevbodyData)
+      console.log("new data: ",data)
+    }//
+  },[data])
   
 
 

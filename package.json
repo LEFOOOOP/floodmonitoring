@@ -28,6 +28,7 @@
     "react-native-sse": "^1.1.0",
     "react-native-tab-view": "^3.1.1",
     "react-native-table-component": "^1.2.2",
+    "react-native-use-websocket": "^0.2.6",
     "react-native-vector-icons": "^9.1.0",
     "react-native-web": "0.17.7",
     "webpack-dev-server": "~3.11.0"

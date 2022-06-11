@@ -1,4 +1,3 @@
-//import { StatusBar } from 'expo-status-bar';
 import React, {useState} from 'react';
 import { StyleSheet, Text, SafeAreaView } from 'react-native';
 import Navigation from './src/components/Navigation';

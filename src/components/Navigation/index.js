@@ -6,7 +6,6 @@ import { createMaterialTopTabNavigator } from '@react-navigation/material-top-ta
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 import Homescreen from '../../screens/Homescreen';
-import Historyscreen from '../../screens/Historyscreen';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -36,7 +35,6 @@ const Navigation = () => {
                 tabBarPosition ={'bottom'}
             >
                 <Tab.Screen name="Home" component={Homescreen} />
-                <Tab.Screen name="History" component={Historyscreen} />
             </Tab.Navigator>
         </NavigationContainer>
     );

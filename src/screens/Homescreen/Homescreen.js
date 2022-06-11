@@ -1,32 +1,16 @@
-//import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, ImageBackground, Image, ScrollView, RefreshControl,Button} from 'react-native';
-import React, {useState,useEffect,useRef} from 'react';
-import EventSource, {EventSourceListener} from "react-native-sse";
+import { StyleSheet, Text, ImageBackground, Image, ScrollView, RefreshControl, Button } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import EventSource, { EventSourceListener } from "react-native-sse";
 import bgImage from '../../../assets/rain.jpg';
 import ReactNativeZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView';
-//import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 
-//import { Text, View, Button, Platform } from 'react-native';
-let previousData = "A"
-var floodData = ""
-var checker = "a"
-var counter = 0
-var globalFLoodData = ""
 
-// Notifications.scheduleNotificationAsync({
-//   content: {
-//     title: 'Remember to drink water!',
-//     body: "Bobo mo"
-//   },
-//   trigger: {
-//     seconds: 3600,
-//     repeats: true,
-//   },
-// });
+var prevbodyData = ""
 
-Notifications.setNotificationHandler({ 
+
+Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
     shouldPlaySound: true,
@@ -35,14 +19,8 @@ Notifications.setNotificationHandler({
 });
 
 export let historyData = [];
-async function sendPushNotification(expoPushToken,bodyData) {
-       //
-      console.log(floodData, "ito ay ang bagong flood data")
-      console.log("bago: ",previousData )
-       //setPreviousData(floodData);
-     console.log("pagkatapos",previousData);
-    //  
-  console.log("pushNotif pabilang")
+async function sendPushNotification(expoPushToken, bodyData) {
+
   let message = {
     to: expoPushToken,
     sound: 'default',
@@ -50,7 +28,7 @@ async function sendPushNotification(expoPushToken,bodyData) {
     body: bodyData,
     data: { someData: "asdasd" },
   };
-  
+
 
   await fetch('https://exp.host/--/api/v2/push/send', {
     method: 'POST',
@@ -64,52 +42,38 @@ async function sendPushNotification(expoPushToken,bodyData) {
 }
 
 const Homescreen = () => {
-  
+
   const [expoPushToken, setExpoPushToken] = useState('');
   const [notification, setNotification] = useState(false);
   const notificationListener = useRef();
   const responseListener = useRef();
-  
+
   const [data, setData] = useState("");
   const [data2, setData2] = useState("");
   const [data3, setData3] = useState("");
-  
-  
-  
+  const [timestamp, setTimeStamp] = useState(new Date())
+
+
+  const previousT = new Date()
+  let previousTime = previousT.getTime()
+
   const handleStream = (e) => {
-   // var checker = "a"
-    
+
     let stringData = JSON.parse((e.data.slice(1, -1).replace(/'/g, '"').split(", {"))[0]);
-    console.log("payload: ",stringData)
-    //setPreviousData(stringData["water level"])
-    //console.log(stringData)r
-    setData (stringData["water level"]);// data = stringData["water level"]
-    //console.log("Warer levcio",stringData["water level"]);
-    //console.log("live:", data)
-    setData2 (stringData["other sensor data"]);
-    setData3 (stringData["flood warning"]);
-    //console.log("bago",previousData);
-    //floodData = stringData["water level"]
+    setData(stringData["water level"]);
+    setData2(stringData["other sensor data"]);
+    setData3(stringData["flood warning"]);
+    let stringData2 = JSON.parse(("{").concat((e.data.slice(1, -1).replace(/'/g, '"').split(", {"))[1]));
+    console.log("payload others:  ", Object.values(stringData2)[0].replace(/ /g, 'T'))
+    console.log("old time :  ", previousTime)
+    let newEntryTS = new Date(Object.values(stringData2)[0].replace(/ /g, 'T')).getTime()
+    console.log("ts : ", newEntryTS)
+    if (previousTime < newEntryTS) {
+      console.log("new time stamp!!!!!!!!!!")
+      setTimeStamp(newEntryTS)
+      previousTime = newEntryTS
+    }
 
-
-    // fetch('https://iotproject-sample.herokuapp.com/streams/ESP32V1/', {
-    //   method: 'GET',
-    //   headers: {
-    //     'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImtpbWZvbGxvc29AZ21haWwuY29tIiwidXNlcl9pZCI6ImtpbWZmIiwiaWF0IjoxNjQ3MjM0NjYwfQ.jGfiA8toi4v_8AYP6ohu9qWExEaxmLsQ3sLFtSBZTeU',
-    //   },
-    // }).then(async response => {
-    //   try {
-    //       historyData = await response.json();
-    //       console.log(historyData[0]);
-    //       console.log(historyData.length);
-          
-          
-    //   } catch (err){
-    //     console.log(err.message);
-
-    //   }})
-      
-    
   }
   const options = {
     method: 'GET', // Request method. Default: GET
@@ -119,34 +83,28 @@ const Homescreen = () => {
     debug: false, // Show console.debug messages for debugging purpose. Default: false
     pollingInterval: 1000, // Time (ms) between reconnections. Default: 5000
   }
-  
-  let sse = new EventSource('https://iotproject-sample.herokuapp.com/streams/live/ESP32V1',options);
+
+  let sse = new EventSource('http://18.136.210.234/streams/live/ESP32V1', options);
   sse.addEventListener("message", async (e) => {
-    
-      handleStream(e)
-  });
-
-  sse.addEventListener("close", (event) => {
-    console.log("Close SSE connection.");
+    handleStream(e)
   });
 
 
 
-  
-  let prevbodyData = ""
-  useEffect(()=>{
-    if(data != prevbodyData){
-      sendPushNotification(expoPushToken,data);     
-      
+
+
+  useEffect(() => {
+    if (data != prevbodyData) {
+      console.log("sending push notif..")
+      sendPushNotification(expoPushToken, data);
       prevbodyData = data
-      console.log("previous data: ",  prevbodyData)
-      console.log("new data: ",data)
-    }//
-  },[data])
-  
+      console.log("push notif sent.")
+    }
+  }, [timestamp])
 
 
-  
+
+
   async function registerForPushNotificationsAsync() {
     let token;
     if (Device.isDevice) {
@@ -165,7 +123,7 @@ const Homescreen = () => {
     } else {
       alert('Must use physical device for Push Notifications');
     }
-  
+
     if (Platform.OS === 'android') {
       Notifications.setNotificationChannelAsync('default', {
         name: 'default',
@@ -174,7 +132,7 @@ const Homescreen = () => {
         lightColor: '#FF231F7C',
       });
     }
-  
+
     return token;
   }
   useEffect(() => {
@@ -195,65 +153,41 @@ const Homescreen = () => {
       Notifications.removeNotificationSubscription(responseListener.current);
     };
   }, []);
-  
 
-// useEffect(()=>{
-//     fetch('https://iotproject-sample.herokuapp.com/streams/ESP32V1/', {
-//         method: 'GET',
-//         headers: {
-//           'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImtpbWZvbGxvc29AZ21haWwuY29tIiwidXNlcl9pZCI6ImtpbWZmIiwiaWF0IjoxNjQ3MjM0NjYwfQ.jGfiA8toi4v_8AYP6ohu9qWExEaxmLsQ3sLFtSBZTeU',
-//         },
-//       }).then(async response => {
-//         try {
-//             historyData = await response.json();
-//             console.log(historyData[0]);
-//             console.log(historyData.length);
-            
-            
-//         } catch (err){
-//           console.log(err.message);
 
-//         }})
-// })
   const wait = (timeout) => {
-  return new Promise(resolve => setTimeout(resolve, timeout));
-}
+    return new Promise(resolve => setTimeout(resolve, timeout));
+  }
 
   const [refreshing, setRefreshing] = React.useState(false);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
     wait(2000).then(() => setRefreshing(false));
-  }, []); 
-  
+  }, []);
+
   return (
     <ReactNativeZoomableView
-        zoomEnabled={true}
-        maxZoom={2}
-        minZoom={0.5}
-        bindToBorders={true}
-      >
-    <ImageBackground source={bgImage} style={styles.container}>
-      <Text style={styles.text}>Flood Level and Rate Monitoring</Text>
-      <Text style={styles.text}>Live Data</Text>
-      <Text style={styles.text2}>Flood Level: {data}</Text>
-      <Text style={styles.text2}>Flood Rate: {data2} mm/hr</Text>
-      <Text style={styles.text2}>Flood Rate Category: {data3}</Text>
-      {/* <Button
-        title="Press to Send Notification"
-        onPress={async () => {
-          await sendPushNotification(expoPushToken);
-        }}
-      /> */}
-      <Image style={{width: 500, height: 100}}
-            resizeMode='contain'
-            source={require('../../../assets/warning.png')}
-      />
-      <Image style={{height: 400}}
-            resizeMode='contain'
-            source={require('../../../assets/levels.png')}
-      />
-    </ImageBackground>
+      zoomEnabled={true}
+      maxZoom={2}
+      minZoom={0.5}
+      bindToBorders={true}
+    >
+      <ImageBackground source={bgImage} style={styles.container}>
+        <Text style={styles.text}>Flood Level and Rate Monitoring</Text>
+        <Text style={styles.text}>Live Data</Text>
+        <Text style={styles.text2}>Flood Level: {data}</Text>
+        <Text style={styles.text2}>Flood Rate: {data2} mm/hr</Text>
+        <Text style={styles.text2}>Flood Rate Category: {data3}</Text>
+        <Image style={{ width: 500, height: 100 }}
+          resizeMode='contain'
+          source={require('../../../assets/warning.png')}
+        />
+        <Image style={{ height: 400 }}
+          resizeMode='contain'
+          source={require('../../../assets/levels.png')}
+        />
+      </ImageBackground>
     </ReactNativeZoomableView>
   );
 }
@@ -266,18 +200,18 @@ const styles = StyleSheet.create({
   },
   text: {
     color: '#33324f',
-    fontStyle:"italic",
-    fontSize:20,
-    fontWeight:"bold",
+    fontStyle: "italic",
+    fontSize: 20,
+    fontWeight: "bold",
     marginTop: 30,
   },
   text2: {
     color: 'white',
-    fontStyle:"italic",
-    fontSize:15,
-    fontWeight:"bold",
+    fontStyle: "italic",
+    fontSize: 15,
+    fontWeight: "bold",
   },
-  
+
 });
 
 
